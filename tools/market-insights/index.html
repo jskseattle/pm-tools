@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Market & Customer Insights Generator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+    background: #f0f4f8;
+    color: #1a202c;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: #1a365d;
+  }
+
+  .subtitle {
+    color: #64748b;
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    width: 100%;
+    max-width: 700px;
+  }
+
+  .progress-step {
+    flex: 1;
+    text-align: center;
+  }
+
+  .progress-step .bar {
+    height: 4px;
+    background: #cbd5e1;
+    border-radius: 2px;
+    margin-bottom: 0.4rem;
+    transition: background 0.3s;
+  }
+
+  .progress-step.active .bar,
+  .progress-step.done .bar {
+    background: #2563eb;
+  }
+
+  .progress-step .label {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    transition: color 0.3s;
+  }
+
+  .progress-step.active .label {
+    color: #2563eb;
+    font-weight: 600;
+  }
+
+  .progress-step.done .label {
+    color: #1e40af;
+  }
+
+  /* Card */
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+    padding: 2rem;
+    width: 100%;
+    max-width: 700px;
+  }
+
+  .stage { display: none; }
+  .stage.visible { display: block; }
+
+  .stage-header {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+  }
+
+  .stage-desc {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+  }
+
+  .field { margin-bottom: 1.25rem; }
+
+  .field label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 0.35rem;
+  }
+
+  .field .hint {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    margin-bottom: 0.35rem;
+  }
+
+  .field input[type="text"],
+  .field textarea,
+  .field select {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: #1e293b;
+    background: #f8fafc;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .field input:focus,
+  .field textarea:focus,
+  .field select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  }
+
+  .field textarea { resize: vertical; min-height: 80px; }
+
+  /* Checkbox group */
+  .checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: #475569;
+    background: #f1f5f9;
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .checkbox-group label:hover { background: #e2e8f0; }
+  .checkbox-group input[type="checkbox"] { accent-color: #2563eb; }
+
+  /* Navigation */
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .btn {
+    padding: 0.6rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn-secondary {
+    background: #f1f5f9;
+    color: #475569;
+  }
+
+  .btn-secondary:hover { background: #e2e8f0; }
+
+  .btn-primary {
+    background: #2563eb;
+    color: #fff;
+  }
+
+  .btn-primary:hover { background: #1d4ed8; }
+
+  .btn-danger {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+
+  .btn-danger:hover { background: #fee2e2; }
+
+  .spacer { visibility: hidden; }
+
+  /* Summary */
+  .summary-section {
+    margin-bottom: 1.5rem;
+  }
+
+  .summary-section h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #2563eb;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 2px solid #eff6ff;
+  }
+
+  .summary-row {
+    margin-bottom: 0.6rem;
+  }
+
+  .summary-row .q {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 500;
+  }
+
+  .summary-row .a {
+    font-size: 0.9rem;
+    color: #1e293b;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+
+  .summary-row .a.empty {
+    color: #cbd5e1;
+    font-style: italic;
+  }
+
+  .export-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1e293b;
+    color: #fff;
+    padding: 0.65rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 1rem 0.75rem; }
+    .card { padding: 1.25rem; }
+    .progress-step .label { font-size: 0.6rem; }
+    h1 { font-size: 1.35rem; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Market & Customer Insights Generator</h1>
+<p class="subtitle">A structured framework to sharpen your product strategy</p>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<div class="card">
+  <!-- Stage 1: Product Context -->
+  <div class="stage" id="stage-0">
+    <h2 class="stage-header">Product Context</h2>
+    <p class="stage-desc">Start with the basics. Ground your thinking in the specific problem you're solving and for whom.</p>
+    <div class="field">
+      <label for="productName">Product / Service Name</label>
+      <input type="text" id="productName" placeholder="e.g. Acme Analytics">
+    </div>
+    <div class="field">
+      <label for="oneLiner">One-line description</label>
+      <div class="hint">What does it do, in plain language?</div>
+      <input type="text" id="oneLiner" placeholder="e.g. Real-time dashboards for e-commerce teams">
+    </div>
+    <div class="field">
+      <label for="targetCustomer">Target customer</label>
+      <div class="hint">Be specific: role, company size, industry</div>
+      <textarea id="targetCustomer" rows="2" placeholder="e.g. VP of Marketing at mid-market DTC brands doing $10M-$100M in annual revenue"></textarea>
+    </div>
+    <div class="field">
+      <label for="problemSolved">What problem does it solve?</label>
+      <div class="hint">Describe the pain point in the customer's words</div>
+      <textarea id="problemSolved" rows="3" placeholder="e.g. Marketing teams waste 10+ hours/week pulling reports from 5 different tools to understand what's working"></textarea>
+    </div>
+    <div class="field">
+      <label for="currentStage">Current stage</label>
+      <select id="currentStage">
+        <option value="">Select...</option>
+        <option value="Idea">Idea</option>
+        <option value="MVP">MVP</option>
+        <option value="Growth">Growth</option>
+        <option value="Mature">Mature</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Stage 2: Market Landscape -->
+  <div class="stage" id="stage-1">
+    <h2 class="stage-header">Market Landscape</h2>
+    <p class="stage-desc">Zoom out. Understand the terrain you're operating in and what your customers do today.</p>
+    <div class="field">
+      <label for="competitors">Top 3 competitors</label>
+      <div class="hint">Name them and note what each does well</div>
+      <textarea id="competitors" rows="4" placeholder="1. Competitor A — strong brand, large enterprise base&#10;2. Competitor B — best free tier, developer-loved&#10;3. Competitor C — deep integrations with Shopify"></textarea>
+    </div>
+    <div class="field">
+      <label for="currentSolution">How do customers solve this today?</label>
+      <div class="hint">What do they do without your product? Spreadsheets? Manual process? A competitor?</div>
+      <textarea id="currentSolution" rows="3" placeholder="e.g. Most teams cobble together Google Analytics, Shopify reports, and a shared spreadsheet updated weekly by an analyst"></textarea>
+    </div>
+    <div class="field">
+      <label for="marketTrends">Key market trends</label>
+      <div class="hint">What forces are shaping this space right now?</div>
+      <textarea id="marketTrends" rows="3" placeholder="e.g. Privacy regulations killing third-party cookies, AI-driven analytics becoming table stakes, consolidation of martech vendors"></textarea>
+    </div>
+    <div class="field">
+      <label for="marketSize">Market size / opportunity</label>
+      <div class="hint">TAM, SAM, or a qualitative description — whatever you have</div>
+      <textarea id="marketSize" rows="2" placeholder="e.g. $4.2B marketing analytics market, growing 15% YoY. Our SAM is ~$800M (mid-market DTC)"></textarea>
+    </div>
+  </div>
+
+  <!-- Stage 3: Differentiation -->
+  <div class="stage" id="stage-2">
+    <h2 class="stage-header">Differentiation</h2>
+    <p class="stage-desc">This is where most products are weakest. Be brutally honest about what makes you different — and what doesn't.</p>
+    <div class="field">
+      <label for="diffWhat">What do you do differently from competitors?</label>
+      <div class="hint">Focus on real differences customers care about, not internal technical details</div>
+      <textarea id="diffWhat" rows="3" placeholder="e.g. We auto-connect to all data sources in &lt;5 min vs. weeks of setup. Our insights are action-oriented, not just charts"></textarea>
+    </div>
+    <div class="field">
+      <label for="uvp">Unique value proposition — one sentence</label>
+      <div class="hint">If a customer remembers one thing about you, what is it?</div>
+      <input type="text" id="uvp" placeholder="e.g. The only analytics tool that tells you what to do, not just what happened">
+    </div>
+    <div class="field">
+      <label for="switchReason">Why would a customer switch to you?</label>
+      <div class="hint">What's the trigger that makes someone leave their current solution?</div>
+      <textarea id="switchReason" rows="3" placeholder="e.g. They just missed a major trend because their weekly report was 5 days stale. They need real-time and can't afford a full-time analyst"></textarea>
+    </div>
+    <div class="field">
+      <label for="weakness">What would a competitor say is your biggest weakness?</label>
+      <div class="hint">Honest self-awareness here makes the rest of your strategy stronger</div>
+      <textarea id="weakness" rows="3" placeholder="e.g. We lack the depth of enterprise features — no SSO, no custom permissions, no SOC2 yet"></textarea>
+    </div>
+  </div>
+
+  <!-- Stage 4: Moats & Defensibility -->
+  <div class="stage" id="stage-3">
+    <h2 class="stage-header">Moats & Defensibility</h2>
+    <p class="stage-desc">Differentiation gets you in the door. Moats keep competitors from following you through it.</p>
+    <div class="field">
+      <label for="harderOverTime">What gets harder for competitors to replicate over time?</label>
+      <textarea id="harderOverTime" rows="3" placeholder="e.g. Every customer adds data that improves our benchmarking models. After 6 months of use, their historical data becomes an asset locked in our platform"></textarea>
+    </div>
+    <div class="field">
+      <label>Which moat types apply to you?</label>
+      <div class="hint">Select all that apply</div>
+      <div class="checkbox-group">
+        <label><input type="checkbox" id="moatNetwork" value="Network Effects"> Network Effects</label>
+        <label><input type="checkbox" id="moatData" value="Data Advantages"> Data Advantages</label>
+        <label><input type="checkbox" id="moatSwitching" value="Switching Costs"> Switching Costs</label>
+        <label><input type="checkbox" id="moatBrand" value="Brand"> Brand</label>
+        <label><input type="checkbox" id="moatScale" value="Economies of Scale"> Economies of Scale</label>
+      </div>
+    </div>
+    <div class="field">
+      <label for="moatExplain">Explain your selected moats</label>
+      <div class="hint">For each one you checked, explain specifically how it applies</div>
+      <textarea id="moatExplain" rows="4" placeholder="e.g. Data Advantages: our benchmarking model gets more accurate with each customer. Switching Costs: after 6 months, teams have built workflows and alerts they'd have to recreate elsewhere"></textarea>
+    </div>
+    <div class="field">
+      <label for="unfairAdvantage">Your unfair advantage</label>
+      <div class="hint">What do you have that others can't easily get?</div>
+      <textarea id="unfairAdvantage" rows="2" placeholder="e.g. Our founding team built the analytics infrastructure at Shopify — we have deep relationships with their ecosystem"></textarea>
+    </div>
+    <div class="field">
+      <label for="cloneTest">If a well-funded competitor cloned your product tomorrow, what would you still have?</label>
+      <textarea id="cloneTest" rows="3" placeholder="e.g. 18 months of customer data powering our models, 200+ integrations battle-tested in production, and trust within the DTC community"></textarea>
+    </div>
+  </div>
+
+  <!-- Stage 5: Success Metrics -->
+  <div class="stage" id="stage-4">
+    <h2 class="stage-header">Success Metrics</h2>
+    <p class="stage-desc">Define what winning looks like — and what would make you change course.</p>
+    <div class="field">
+      <label for="success6m">What does success look like in 6 months?</label>
+      <textarea id="success6m" rows="2" placeholder="e.g. 50 paying customers, $25K MRR, NPS > 40"></textarea>
+    </div>
+    <div class="field">
+      <label for="success12m">What does success look like in 12 months?</label>
+      <textarea id="success12m" rows="2" placeholder="e.g. 200 paying customers, $150K MRR, Series A raised, 2 enterprise logos"></textarea>
+    </div>
+    <div class="field">
+      <label for="northStar">North star metric</label>
+      <div class="hint">The single metric that best captures the value you deliver</div>
+      <input type="text" id="northStar" placeholder="e.g. Weekly active dashboards viewed per customer">
+    </div>
+    <div class="field">
+      <label for="leadingIndicators">Leading indicators</label>
+      <div class="hint">What early signals tell you you're on the right track?</div>
+      <textarea id="leadingIndicators" rows="3" placeholder="e.g. Time-to-first-insight < 10 min, 3+ team members invited within first week, daily login rate > 60%"></textarea>
+    </div>
+    <div class="field">
+      <label for="pivotSignal">What signal would make you pivot or kill this product?</label>
+      <div class="hint">Defining this now prevents sunk-cost thinking later</div>
+      <textarea id="pivotSignal" rows="3" placeholder="e.g. If after 6 months we can't get trial-to-paid above 5%, or if churn exceeds 8%/month, we'd revisit the core value prop"></textarea>
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <div class="stage" id="stage-summary">
+    <h2 class="stage-header">Your Market & Customer Insights</h2>
+    <p class="stage-desc">Here's your complete strategic snapshot. Review, refine, and share.</p>
+    <div id="summaryContent"></div>
+    <div class="export-buttons">
+      <button class="btn btn-primary" onclick="copyToClipboard()">Copy to Clipboard</button>
+      <button class="btn btn-secondary" onclick="downloadMarkdown()">Download as Markdown</button>
+      <button class="btn btn-danger" onclick="startOver()">Start Over</button>
+    </div>
+  </div>
+
+  <div class="nav" id="nav">
+    <button class="btn btn-secondary" id="btnBack" onclick="navigate(-1)">Back</button>
+    <button class="btn btn-primary" id="btnNext" onclick="navigate(1)">Next</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STAGES = [
+  { title: 'Product Context' },
+  { title: 'Market Landscape' },
+  { title: 'Differentiation' },
+  { title: 'Moats' },
+  { title: 'Success Metrics' },
+  { title: 'Review' }
+];
+
+const FIELDS = [
+  // Stage 0
+  [
+    { id: 'productName', label: 'Product / Service Name' },
+    { id: 'oneLiner', label: 'One-line Description' },
+    { id: 'targetCustomer', label: 'Target Customer' },
+    { id: 'problemSolved', label: 'Problem Solved' },
+    { id: 'currentStage', label: 'Current Stage' }
+  ],
+  // Stage 1
+  [
+    { id: 'competitors', label: 'Top 3 Competitors' },
+    { id: 'currentSolution', label: 'How Customers Solve This Today' },
+    { id: 'marketTrends', label: 'Key Market Trends' },
+    { id: 'marketSize', label: 'Market Size / Opportunity' }
+  ],
+  // Stage 2
+  [
+    { id: 'diffWhat', label: 'What You Do Differently' },
+    { id: 'uvp', label: 'Unique Value Proposition' },
+    { id: 'switchReason', label: 'Why Customers Would Switch' },
+    { id: 'weakness', label: 'Biggest Weakness (Competitor View)' }
+  ],
+  // Stage 3
+  [
+    { id: 'harderOverTime', label: 'What Gets Harder to Replicate' },
+    { id: 'moats', label: 'Moat Types', type: 'checkboxes', ids: ['moatNetwork','moatData','moatSwitching','moatBrand','moatScale'] },
+    { id: 'moatExplain', label: 'Moat Explanation' },
+    { id: 'unfairAdvantage', label: 'Unfair Advantage' },
+    { id: 'cloneTest', label: 'Clone Test' }
+  ],
+  // Stage 4
+  [
+    { id: 'success6m', label: 'Success in 6 Months' },
+    { id: 'success12m', label: 'Success in 12 Months' },
+    { id: 'northStar', label: 'North Star Metric' },
+    { id: 'leadingIndicators', label: 'Leading Indicators' },
+    { id: 'pivotSignal', label: 'Pivot / Kill Signal' }
+  ]
+];
+
+const SECTION_TITLES = [
+  'Product Context',
+  'Market Landscape',
+  'Differentiation',
+  'Moats & Defensibility',
+  'Success Metrics'
+];
+
+let current = 0;
+
+function buildProgress() {
+  const bar = document.getElementById('progressBar');
+  bar.innerHTML = STAGES.map((s, i) =>
+    `<div class="progress-step" id="ps-${i}">
+      <div class="bar"></div>
+      <div class="label">${s.title}</div>
+    </div>`
+  ).join('');
+}
+
+function updateProgress() {
+  STAGES.forEach((_, i) => {
+    const el = document.getElementById(`ps-${i}`);
+    el.classList.remove('active', 'done');
+    if (i < current) el.classList.add('done');
+    if (i === current) el.classList.add('active');
+  });
+}
+
+function showStage() {
+  document.querySelectorAll('.stage').forEach(s => s.classList.remove('visible'));
+  const isSummary = current === STAGES.length - 1;
+  const stageId = isSummary ? 'stage-summary' : `stage-${current}`;
+  document.getElementById(stageId).classList.add('visible');
+
+  const nav = document.getElementById('nav');
+  const btnBack = document.getElementById('btnBack');
+  const btnNext = document.getElementById('btnNext');
+
+  if (isSummary) {
+    nav.style.display = 'none';
+    renderSummary();
+  } else {
+    nav.style.display = 'flex';
+    btnBack.style.visibility = current === 0 ? 'hidden' : 'visible';
+    btnNext.textContent = current === STAGES.length - 2 ? 'Generate Insights' : 'Next';
+  }
+
+  updateProgress();
+}
+
+function navigate(dir) {
+  current += dir;
+  current = Math.max(0, Math.min(current, STAGES.length - 1));
+  showStage();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function getVal(id) {
+  const el = document.getElementById(id);
+  if (!el) return '';
+  return (el.value || '').trim();
+}
+
+function getCheckedMoats() {
+  const moatIds = ['moatNetwork','moatData','moatSwitching','moatBrand','moatScale'];
+  return moatIds
+    .filter(id => document.getElementById(id).checked)
+    .map(id => document.getElementById(id).value);
+}
+
+function renderSummary() {
+  const container = document.getElementById('summaryContent');
+  let html = '';
+
+  SECTION_TITLES.forEach((title, si) => {
+    html += `<div class="summary-section"><h3>${title}</h3>`;
+    FIELDS[si].forEach(f => {
+      let val;
+      if (f.type === 'checkboxes') {
+        val = getCheckedMoats().join(', ');
+      } else {
+        val = getVal(f.id);
+      }
+      const display = val || 'Not provided';
+      const cls = val ? '' : ' empty';
+      html += `<div class="summary-row">
+        <div class="q">${f.label}</div>
+        <div class="a${cls}">${escapeHtml(display)}</div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+
+  container.innerHTML = html;
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function buildMarkdown() {
+  let md = `# Market & Customer Insights\n`;
+  md += `*Generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}*\n\n`;
+
+  SECTION_TITLES.forEach((title, si) => {
+    md += `## ${title}\n\n`;
+    FIELDS[si].forEach(f => {
+      let val;
+      if (f.type === 'checkboxes') {
+        val = getCheckedMoats().join(', ');
+      } else {
+        val = getVal(f.id);
+      }
+      md += `**${f.label}**\n${val || '*Not provided*'}\n\n`;
+    });
+  });
+
+  return md;
+}
+
+function copyToClipboard() {
+  const md = buildMarkdown();
+  navigator.clipboard.writeText(md).then(() => {
+    showToast('Copied to clipboard');
+  }).catch(() => {
+    showToast('Copy failed — try the download option');
+  });
+}
+
+function downloadMarkdown() {
+  const md = buildMarkdown();
+  const name = getVal('productName') || 'market-insights';
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '');
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${slug}-insights.md`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Downloaded');
+}
+
+function startOver() {
+  if (!confirm('Clear all your answers and start over?')) return;
+  document.querySelectorAll('input[type="text"], textarea, select').forEach(el => el.value = '');
+  document.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
+  current = 0;
+  showStage();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+buildProgress();
+showStage();
+</script>
+</body>
+</html>
