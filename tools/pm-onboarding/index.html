@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PM Onboarding Planner</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+    background: #f0f4f8;
+    color: #1a202c;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: #1a365d;
+  }
+
+  .subtitle {
+    color: #64748b;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+  }
+
+  .persistence-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .persistence-bar .btn { font-size: 0.8rem; padding: 0.4rem 1rem; }
+
+  .progress-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    width: 100%;
+    max-width: 700px;
+  }
+
+  .progress-step { flex: 1; text-align: center; cursor: pointer; }
+
+  .progress-step .bar {
+    height: 4px;
+    background: #cbd5e1;
+    border-radius: 2px;
+    margin-bottom: 0.4rem;
+    transition: background 0.3s;
+  }
+
+  .progress-step.active .bar,
+  .progress-step.done .bar { background: #2563eb; }
+
+  .progress-step .label {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    transition: color 0.3s;
+  }
+
+  .progress-step.active .label { color: #2563eb; font-weight: 600; }
+  .progress-step.done .label { color: #1e40af; }
+
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+    padding: 2rem;
+    width: 100%;
+    max-width: 700px;
+  }
+
+  .stage { display: none; }
+  .stage.visible { display: block; }
+
+  .stage-header {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+  }
+
+  .stage-desc {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+  }
+
+  .field { margin-bottom: 1.25rem; }
+
+  .field label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 0.35rem;
+  }
+
+  .field .hint {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    margin-bottom: 0.35rem;
+  }
+
+  .field input[type="text"],
+  .field textarea,
+  .field select {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: #1e293b;
+    background: #f8fafc;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .field input:focus,
+  .field textarea:focus,
+  .field select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  }
+
+  .field textarea { resize: vertical; min-height: 80px; }
+
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .btn {
+    padding: 0.6rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn-secondary { background: #f1f5f9; color: #475569; }
+  .btn-secondary:hover { background: #e2e8f0; }
+
+  .btn-primary { background: #2563eb; color: #fff; }
+  .btn-primary:hover { background: #1d4ed8; }
+
+  .btn-danger { background: #fef2f2; color: #dc2626; }
+  .btn-danger:hover { background: #fee2e2; }
+
+  /* Stakeholder cards */
+  .stakeholder-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .stakeholder-card .sh-info { flex: 1; min-width: 0; }
+
+  .stakeholder-card .sh-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #1e293b;
+  }
+
+  .stakeholder-card .sh-meta {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-top: 0.15rem;
+  }
+
+  .stakeholder-card .sh-detail {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    margin-top: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .stakeholder-card .sh-actions {
+    display: flex;
+    gap: 0.35rem;
+    margin-left: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    color: #64748b;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .btn-icon:hover { background: #e2e8f0; color: #1e293b; }
+  .btn-icon.danger:hover { background: #fee2e2; color: #dc2626; }
+
+  .stakeholder-form-fields {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .stakeholder-form-fields .field { margin-bottom: 0.75rem; }
+
+  .form-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+
+  .generated-notice {
+    font-size: 0.78rem;
+    color: #2563eb;
+    font-style: italic;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Summary */
+  .summary-section { margin-bottom: 1.5rem; }
+
+  .summary-section h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #2563eb;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 2px solid #eff6ff;
+  }
+
+  .summary-row { margin-bottom: 0.6rem; }
+
+  .summary-row .q {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 500;
+  }
+
+  .summary-row .a {
+    font-size: 0.9rem;
+    color: #1e293b;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+
+  .summary-row .a.empty {
+    color: #cbd5e1;
+    font-style: italic;
+  }
+
+  .summary-stakeholder {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .checklist-questions {
+    list-style: none;
+    padding-left: 0.5rem;
+    margin-top: 0.35rem;
+    margin-bottom: 1rem;
+  }
+
+  .checklist-questions li {
+    font-size: 0.85rem;
+    color: #334155;
+    padding: 0.2rem 0;
+    padding-left: 1.25rem;
+    position: relative;
+  }
+
+  .checklist-questions li::before {
+    content: '\2610';
+    position: absolute;
+    left: 0;
+  }
+
+  .export-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1e293b;
+    color: #fff;
+    padding: 0.65rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  #fileInput { display: none; }
+
+  @media (max-width: 600px) {
+    body { padding: 1rem 0.75rem; }
+    .card { padding: 1.25rem; }
+    .progress-step .label { font-size: 0.6rem; }
+    h1 { font-size: 1.35rem; }
+    .stakeholder-card { flex-direction: column; }
+    .stakeholder-card .sh-actions { margin-left: 0; margin-top: 0.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<h1>PM Onboarding Planner</h1>
+<p class="subtitle">Map your stakeholders, align on goals, and build your 30/60/90 day plan</p>
+
+<div class="persistence-bar">
+  <button class="btn btn-secondary" onclick="saveProgressJSON()">Save Progress</button>
+  <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">Load Progress</button>
+  <input type="file" id="fileInput" accept=".json" onchange="loadProgressJSON(event)">
+</div>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<div class="card">
+  <!-- Stage 0: Role Context -->
+  <div class="stage" id="stage-0">
+    <h2 class="stage-header">Role Context</h2>
+    <p class="stage-desc">Ground yourself in the basics of your new role. This context shapes everything that follows.</p>
+    <div class="field">
+      <label for="pmName">Your Name</label>
+      <input type="text" id="pmName" placeholder="e.g. Sarah Chen">
+    </div>
+    <div class="field">
+      <label for="pmRole">Your Role / Title</label>
+      <input type="text" id="pmRole" placeholder="e.g. Senior Product Manager">
+    </div>
+    <div class="field">
+      <label for="teamName">Team / Product Area</label>
+      <input type="text" id="teamName" placeholder="e.g. Payments Platform">
+    </div>
+    <div class="field">
+      <label for="company">Company</label>
+      <input type="text" id="company" placeholder="e.g. Stripe">
+    </div>
+    <div class="field">
+      <label for="startDate">Start Date</label>
+      <input type="text" id="startDate" placeholder="e.g. June 1, 2026 or 'Starting in 2 weeks'">
+    </div>
+    <div class="field">
+      <label for="teamMission">What is your team's mission?</label>
+      <div class="hint">In 1-2 sentences, what does this team exist to do?</div>
+      <textarea id="teamMission" rows="2" placeholder="e.g. Make it effortless for any business to accept payments globally"></textarea>
+    </div>
+    <div class="field">
+      <label for="biggestUnknown">What's your biggest unknown right now?</label>
+      <div class="hint">What are you most uncertain about in this new role?</div>
+      <textarea id="biggestUnknown" rows="2" placeholder="e.g. I don't know how much autonomy I'll have vs. how much is already decided"></textarea>
+    </div>
+  </div>
+
+  <!-- Stage 1: Stakeholder Ecosystem -->
+  <div class="stage" id="stage-1">
+    <h2 class="stage-header">Stakeholder Ecosystem</h2>
+    <p class="stage-desc">Map the people who matter most to your success. Think broadly: your manager, skip-level, engineering and design leads, cross-functional partners, exec sponsors, and customer-facing teammates.</p>
+    <div id="stakeholderList"></div>
+    <div id="stakeholderForm" style="display:none;">
+      <div class="stakeholder-form-fields">
+        <div class="field">
+          <label for="shName">Name</label>
+          <input type="text" id="shName" placeholder="e.g. Jane Smith">
+        </div>
+        <div class="field">
+          <label for="shTitle">Title / Role</label>
+          <input type="text" id="shTitle" placeholder="e.g. VP of Engineering">
+        </div>
+        <div class="field">
+          <label for="shTeam">Team / Department</label>
+          <input type="text" id="shTeam" placeholder="e.g. Platform Engineering">
+        </div>
+        <div class="field">
+          <label for="shCaresAbout">What they care about most</label>
+          <textarea id="shCaresAbout" rows="2" placeholder="e.g. System reliability, shipping velocity, reducing tech debt"></textarea>
+        </div>
+        <div class="field">
+          <label for="shRelationship">Relationship to your work</label>
+          <select id="shRelationship">
+            <option value="">Select...</option>
+            <option value="Direct Manager">Direct Manager</option>
+            <option value="Skip-Level">Skip-Level</option>
+            <option value="Cross-Functional Partner">Cross-Functional Partner</option>
+            <option value="Engineering Lead">Engineering Lead</option>
+            <option value="Design Lead">Design Lead</option>
+            <option value="Exec Sponsor">Exec Sponsor</option>
+            <option value="Customer-Facing">Customer-Facing</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="saveStakeholder()">Save Stakeholder</button>
+          <button class="btn btn-secondary" onclick="cancelStakeholder()">Cancel</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-secondary" id="addStakeholderBtn" onclick="showStakeholderForm()">+ Add Stakeholder</button>
+  </div>
+
+  <!-- Stage 2: Goal Alignment -->
+  <div class="stage" id="stage-2">
+    <h2 class="stage-header">Goal Alignment</h2>
+    <p class="stage-desc">Connect your work to the goals around you. Misalignment here is the #1 reason PMs struggle in new roles.</p>
+    <div class="field">
+      <label for="teamGoals">Your team's top 3 goals</label>
+      <div class="hint">What are the key objectives for your team this quarter or half?</div>
+      <textarea id="teamGoals" rows="3" placeholder="1. Increase payment success rate from 94% to 97%&#10;2. Launch in 3 new markets&#10;3. Reduce integration time from 2 weeks to 2 days"></textarea>
+    </div>
+    <div class="field">
+      <label for="leadershipPriorities">Leadership priorities</label>
+      <div class="hint">What does your manager and their leadership chain care about most?</div>
+      <textarea id="leadershipPriorities" rows="3" placeholder="e.g. Revenue growth from enterprise accounts, platform reliability, shipping faster with fewer incidents"></textarea>
+    </div>
+    <div class="field">
+      <label for="businessObjectives">Business objectives you support</label>
+      <div class="hint">What company-level goals does your work ladder up to?</div>
+      <textarea id="businessObjectives" rows="3" placeholder="e.g. Grow processing volume 40% YoY, expand international revenue to 30% of total"></textarea>
+    </div>
+    <div class="field">
+      <label for="goalGaps">Where do you see potential misalignment?</label>
+      <div class="hint">Any tension between team goals, leadership priorities, and business objectives?</div>
+      <textarea id="goalGaps" rows="3" placeholder="e.g. Leadership wants faster shipping but also fewer incidents — those can conflict. New market launches may pull focus from reliability work"></textarea>
+    </div>
+  </div>
+
+  <!-- Stage 3: Leadership & Business Context -->
+  <div class="stage" id="stage-3">
+    <h2 class="stage-header">Leadership & Business Context</h2>
+    <p class="stage-desc">Understand the power structure and business landscape you're operating in.</p>
+    <div class="field">
+      <label for="leadershipChain">Your leadership chain</label>
+      <div class="hint">List from your direct manager up to the exec level</div>
+      <textarea id="leadershipChain" rows="3" placeholder="Direct: Alex Rivera (Dir. of Product)&#10;Skip: Maria Santos (VP Product)&#10;Exec: James Liu (CPO)"></textarea>
+    </div>
+    <div class="field">
+      <label for="leadershipCares">What does leadership care about most?</label>
+      <div class="hint">What themes come up repeatedly in all-hands, emails, strategy docs?</div>
+      <textarea id="leadershipCares" rows="3" placeholder="e.g. Customer NPS, time-to-market, enterprise expansion, AI integration"></textarea>
+    </div>
+    <div class="field">
+      <label for="orgPriorities">Org-level priorities</label>
+      <div class="hint">What are the big bets or strategic pillars for the org?</div>
+      <textarea id="orgPriorities" rows="3" placeholder="e.g. 1) AI-first product experiences 2) Enterprise-grade reliability 3) Global expansion"></textarea>
+    </div>
+    <div class="field">
+      <label for="keyMetrics">Key business metrics</label>
+      <div class="hint">What metrics does the business track most closely?</div>
+      <textarea id="keyMetrics" rows="3" placeholder="e.g. MRR, payment success rate, customer acquisition cost, NPS, time-to-integrate"></textarea>
+    </div>
+    <div class="field">
+      <label for="recentChanges">Recent org changes to be aware of</label>
+      <div class="hint">Reorgs, strategy shifts, leadership changes, recent launches or failures</div>
+      <textarea id="recentChanges" rows="3" placeholder="e.g. New CPO joined 3 months ago, team was reorged from product-line to platform model in Q1"></textarea>
+    </div>
+  </div>
+
+  <!-- Stage 4: Team & Org Motivations -->
+  <div class="stage" id="stage-4">
+    <h2 class="stage-header">Team & Org Motivations</h2>
+    <p class="stage-desc">Understanding what drives people is as important as understanding the business. This is how you build trust fast.</p>
+    <div class="field">
+      <label for="teamMotivators">What motivates your team?</label>
+      <div class="hint">What energizes the people you work with? Autonomy, impact, craft, recognition?</div>
+      <textarea id="teamMotivators" rows="3" placeholder="e.g. Engineers care deeply about code quality and hate being rushed. Designers want to do user research but rarely get time for it"></textarea>
+    </div>
+    <div class="field">
+      <label for="teamDynamics">Team dynamics</label>
+      <div class="hint">How does the team work together? What's the decision-making style?</div>
+      <textarea id="teamDynamics" rows="3" placeholder="e.g. Highly collaborative, decisions made by consensus. Standups daily, retros biweekly. Previous PM was very hands-on technically"></textarea>
+    </div>
+    <div class="field">
+      <label for="orgValues">What does the org optimize for?</label>
+      <select id="orgValues">
+        <option value="">Select...</option>
+        <option value="Speed over quality">Speed over quality</option>
+        <option value="Quality over speed">Quality over speed</option>
+        <option value="Innovation over reliability">Innovation over reliability</option>
+        <option value="Reliability over innovation">Reliability over innovation</option>
+        <option value="Balanced / depends on context">Balanced / depends on context</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="culturalNorms">Cultural norms to be aware of</label>
+      <div class="hint">Unwritten rules, communication preferences, meeting culture</div>
+      <textarea id="culturalNorms" rows="3" placeholder="e.g. Everything is documented in RFCs before building. Slack over email. No meetings on Wednesdays. Strong opinions, loosely held"></textarea>
+    </div>
+    <div class="field">
+      <label for="commonPitfalls">Common pitfalls for new PMs here</label>
+      <div class="hint">What have you heard about what trips people up?</div>
+      <textarea id="commonPitfalls" rows="3" placeholder="e.g. Moving too fast without getting eng buy-in, not reading the existing RFCs, trying to change process before understanding why it exists"></textarea>
+    </div>
+  </div>
+
+  <!-- Stage 5: 30/60/90 Day Plan -->
+  <div class="stage" id="stage-5">
+    <h2 class="stage-header">Your 30/60/90 Day Plan</h2>
+    <p class="stage-desc">This plan was generated from everything you've entered. Edit it to make it yours.</p>
+    <p class="generated-notice">Auto-generated from your inputs. Feel free to edit — your changes will be preserved.</p>
+    <div class="field">
+      <label for="plan30">First 30 Days: Learn & Listen</label>
+      <textarea id="plan30" rows="8"></textarea>
+    </div>
+    <div class="field">
+      <label for="plan60">Days 31-60: Contribute & Connect</label>
+      <textarea id="plan60" rows="8"></textarea>
+    </div>
+    <div class="field">
+      <label for="plan90">Days 61-90: Lead & Deliver</label>
+      <textarea id="plan90" rows="8"></textarea>
+    </div>
+    <button class="btn btn-secondary" onclick="regeneratePlan()">Regenerate Plan</button>
+  </div>
+
+  <!-- Stage 6: Summary -->
+  <div class="stage" id="stage-summary">
+    <h2 class="stage-header">Your Onboarding Plan</h2>
+    <p class="stage-desc">Your complete onboarding blueprint. Review, export, and revisit as you ramp.</p>
+    <div id="summaryContent"></div>
+    <div class="export-buttons">
+      <button class="btn btn-primary" onclick="copyToClipboard()">Copy to Clipboard</button>
+      <button class="btn btn-secondary" onclick="downloadMarkdown()">Download as Markdown</button>
+      <button class="btn btn-danger" onclick="startOver()">Start Over</button>
+    </div>
+  </div>
+
+  <div class="nav" id="nav">
+    <button class="btn btn-secondary" id="btnBack" onclick="navigate(-1)">Back</button>
+    <button class="btn btn-primary" id="btnNext" onclick="navigate(1)">Next</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'pm-onboarding-data';
+
+const STAGES = [
+  { title: 'Role Context' },
+  { title: 'Stakeholders' },
+  { title: 'Goals' },
+  { title: 'Leadership' },
+  { title: 'Team & Org' },
+  { title: '30/60/90' },
+  { title: 'Review' }
+];
+
+const FIELDS = [
+  [
+    { id: 'pmName', label: 'Your Name' },
+    { id: 'pmRole', label: 'Your Role / Title' },
+    { id: 'teamName', label: 'Team / Product Area' },
+    { id: 'company', label: 'Company' },
+    { id: 'startDate', label: 'Start Date' },
+    { id: 'teamMission', label: 'Team Mission' },
+    { id: 'biggestUnknown', label: 'Biggest Unknown' }
+  ],
+  [
+    { id: 'stakeholders', label: 'Stakeholder Ecosystem', type: 'dynamic' }
+  ],
+  [
+    { id: 'teamGoals', label: "Team's Top Goals" },
+    { id: 'leadershipPriorities', label: 'Leadership Priorities' },
+    { id: 'businessObjectives', label: 'Business Objectives You Support' },
+    { id: 'goalGaps', label: 'Potential Misalignment' }
+  ],
+  [
+    { id: 'leadershipChain', label: 'Leadership Chain' },
+    { id: 'leadershipCares', label: 'What Leadership Cares About' },
+    { id: 'orgPriorities', label: 'Org-Level Priorities' },
+    { id: 'keyMetrics', label: 'Key Business Metrics' },
+    { id: 'recentChanges', label: 'Recent Org Changes' }
+  ],
+  [
+    { id: 'teamMotivators', label: 'What Motivates the Team' },
+    { id: 'teamDynamics', label: 'Team Dynamics' },
+    { id: 'orgValues', label: 'What the Org Optimizes For' },
+    { id: 'culturalNorms', label: 'Cultural Norms' },
+    { id: 'commonPitfalls', label: 'Common Pitfalls for New PMs' }
+  ],
+  [
+    { id: 'plan30', label: 'First 30 Days: Learn & Listen' },
+    { id: 'plan60', label: 'Days 31-60: Contribute & Connect' },
+    { id: 'plan90', label: 'Days 61-90: Lead & Deliver' }
+  ]
+];
+
+const SECTION_TITLES = [
+  'Role Context',
+  'Stakeholder Ecosystem',
+  'Goal Alignment',
+  'Leadership & Business Context',
+  'Team & Org Motivations',
+  '30/60/90 Day Plan'
+];
+
+let current = 0;
+let stakeholders = [];
+let stakeholderIdCounter = 0;
+let editingStakeholderId = null;
+let planManuallyEdited = false;
+let planGenerated = false;
+
+// --- Utilities ---
+
+function getVal(id) {
+  const el = document.getElementById(id);
+  return el ? (el.value || '').trim() : '';
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// --- Progress bar ---
+
+function buildProgress() {
+  document.getElementById('progressBar').innerHTML = STAGES.map((s, i) =>
+    `<div class="progress-step" id="ps-${i}">
+      <div class="bar"></div>
+      <div class="label">${s.title}</div>
+    </div>`
+  ).join('');
+}
+
+function updateProgress() {
+  STAGES.forEach((_, i) => {
+    const el = document.getElementById(`ps-${i}`);
+    el.classList.remove('active', 'done');
+    if (i < current) el.classList.add('done');
+    if (i === current) el.classList.add('active');
+  });
+}
+
+// --- Navigation ---
+
+function showStage() {
+  document.querySelectorAll('.stage').forEach(s => s.classList.remove('visible'));
+  const isSummary = current === STAGES.length - 1;
+  const stageId = isSummary ? 'stage-summary' : `stage-${current}`;
+  document.getElementById(stageId).classList.add('visible');
+
+  if (current === 5) maybeGeneratePlan();
+
+  const nav = document.getElementById('nav');
+  const btnBack = document.getElementById('btnBack');
+  const btnNext = document.getElementById('btnNext');
+
+  if (isSummary) {
+    nav.style.display = 'none';
+    renderSummary();
+  } else {
+    nav.style.display = 'flex';
+    btnBack.style.visibility = current === 0 ? 'hidden' : 'visible';
+    btnNext.textContent = current === STAGES.length - 2 ? 'Generate Summary' : 'Next';
+  }
+
+  updateProgress();
+  autoSave();
+}
+
+function navigate(dir) {
+  if (dir === 1 && current === 1 && stakeholders.length === 0) {
+    showToast('Add at least one stakeholder to continue');
+    return;
+  }
+  current += dir;
+  current = Math.max(0, Math.min(current, STAGES.length - 1));
+  showStage();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// --- Stakeholder management ---
+
+function renderStakeholderList() {
+  const container = document.getElementById('stakeholderList');
+  if (stakeholders.length === 0) {
+    container.innerHTML = '<p style="color:#94a3b8;font-size:0.85rem;margin-bottom:1rem;">No stakeholders added yet. Click the button below to add your first one.</p>';
+    return;
+  }
+  container.innerHTML = stakeholders.map(s =>
+    `<div class="stakeholder-card">
+      <div class="sh-info">
+        <div class="sh-name">${escapeHtml(s.name || 'Unnamed')}</div>
+        <div class="sh-meta">${escapeHtml(s.title || '')}${s.title && s.team ? ' — ' : ''}${escapeHtml(s.team || '')}${s.relationship ? ' · ' + escapeHtml(s.relationship) : ''}</div>
+        ${s.caresAbout ? `<div class="sh-detail">Cares about: ${escapeHtml(s.caresAbout)}</div>` : ''}
+      </div>
+      <div class="sh-actions">
+        <button class="btn-icon" onclick="editStakeholder(${s.id})" title="Edit">✎</button>
+        <button class="btn-icon danger" onclick="removeStakeholder(${s.id})" title="Remove">✕</button>
+      </div>
+    </div>`
+  ).join('');
+}
+
+function showStakeholderForm(id) {
+  editingStakeholderId = id || null;
+  const form = document.getElementById('stakeholderForm');
+  form.style.display = 'block';
+  document.getElementById('addStakeholderBtn').style.display = 'none';
+
+  if (editingStakeholderId !== null) {
+    const s = stakeholders.find(x => x.id === editingStakeholderId);
+    if (s) {
+      document.getElementById('shName').value = s.name || '';
+      document.getElementById('shTitle').value = s.title || '';
+      document.getElementById('shTeam').value = s.team || '';
+      document.getElementById('shCaresAbout').value = s.caresAbout || '';
+      document.getElementById('shRelationship').value = s.relationship || '';
+    }
+  } else {
+    document.getElementById('shName').value = '';
+    document.getElementById('shTitle').value = '';
+    document.getElementById('shTeam').value = '';
+    document.getElementById('shCaresAbout').value = '';
+    document.getElementById('shRelationship').value = '';
+  }
+
+  document.getElementById('shName').focus();
+}
+
+function cancelStakeholder() {
+  document.getElementById('stakeholderForm').style.display = 'none';
+  document.getElementById('addStakeholderBtn').style.display = '';
+  editingStakeholderId = null;
+}
+
+function saveStakeholder() {
+  const name = document.getElementById('shName').value.trim();
+  if (!name) {
+    showToast('Stakeholder name is required');
+    return;
+  }
+
+  const data = {
+    name,
+    title: document.getElementById('shTitle').value.trim(),
+    team: document.getElementById('shTeam').value.trim(),
+    caresAbout: document.getElementById('shCaresAbout').value.trim(),
+    relationship: document.getElementById('shRelationship').value
+  };
+
+  if (editingStakeholderId !== null) {
+    const idx = stakeholders.findIndex(x => x.id === editingStakeholderId);
+    if (idx !== -1) stakeholders[idx] = { ...stakeholders[idx], ...data };
+  } else {
+    data.id = stakeholderIdCounter++;
+    stakeholders.push(data);
+  }
+
+  cancelStakeholder();
+  renderStakeholderList();
+  planGenerated = false;
+  autoSave();
+}
+
+function editStakeholder(id) {
+  showStakeholderForm(id);
+}
+
+function removeStakeholder(id) {
+  stakeholders = stakeholders.filter(x => x.id !== id);
+  renderStakeholderList();
+  planGenerated = false;
+  autoSave();
+}
+
+// --- 30/60/90 Plan generation ---
+
+function generatePlan() {
+  const names = stakeholders.map(s => s.name).filter(Boolean);
+  const nameList = names.length ? names.join(', ') : 'key stakeholders';
+  const metrics = getVal('keyMetrics') || 'key business metrics';
+  const teamGoals = getVal('teamGoals') || 'team goals';
+  const leaderPriorities = getVal('leadershipPriorities') || 'leadership priorities';
+  const orgPriorities = getVal('orgPriorities') || 'org-level priorities';
+  const teamName = getVal('teamName') || 'your team';
+  const biggestUnknown = getVal('biggestUnknown');
+
+  const managers = stakeholders.filter(s => s.relationship === 'Direct Manager' || s.relationship === 'Skip-Level');
+  const crossFunc = stakeholders.filter(s => s.relationship === 'Cross-Functional Partner');
+  const engineers = stakeholders.filter(s => s.relationship === 'Engineering Lead');
+  const execs = stakeholders.filter(s => s.relationship === 'Exec Sponsor');
+  const customerFacing = stakeholders.filter(s => s.relationship === 'Customer-Facing');
+
+  let plan30 = 'LEARN & LISTEN\n';
+  plan30 += `- Schedule 1:1s with all key stakeholders: ${nameList}\n`;
+  if (managers.length) {
+    plan30 += `- Establish working rhythm with ${managers.map(m => m.name).join(', ')}: understand expectations, communication preferences, and how they define success\n`;
+  }
+  plan30 += `- Learn the metrics that matter: ${metrics}\n`;
+  plan30 += `- Understand current priorities and roadmap for ${teamName}\n`;
+  plan30 += `- Map how ${teamGoals} connect to ${leaderPriorities}\n`;
+  if (biggestUnknown) {
+    plan30 += `- Investigate your biggest unknown: ${biggestUnknown}\n`;
+  }
+  if (customerFacing.length) {
+    plan30 += `- Shadow customer-facing teammates (${customerFacing.map(s => s.name).join(', ')}) to understand user pain points firsthand\n`;
+  }
+  plan30 += '- Review recent PRDs, strategy docs, retrospectives, and customer feedback\n';
+  plan30 += '- Identify 2-3 quick wins you could deliver';
+
+  let plan60 = 'CONTRIBUTE & CONNECT\n';
+  plan60 += '- Deliver your first quick win to build credibility\n';
+  if (crossFunc.length) {
+    plan60 += `- Establish regular check-ins with cross-functional partners: ${crossFunc.map(s => s.name).join(', ')}\n`;
+  }
+  if (engineers.length) {
+    plan60 += `- Build strong working relationship with engineering: ${engineers.map(s => s.name).join(', ')}\n`;
+  }
+  plan60 += `- Identify alignment opportunities between ${teamGoals} and ${orgPriorities}\n`;
+  plan60 += "- Share a written point of view on one key area — demonstrate you've listened and are synthesizing\n";
+  plan60 += '- Start contributing to roadmap discussions with informed opinions\n';
+  plan60 += '- Build a stakeholder map documenting relationships, goals, and influence\n';
+  if (execs.length) {
+    plan60 += `- Get on the radar of exec sponsors: ${execs.map(s => s.name).join(', ')}\n`;
+  }
+  plan60 += `- Begin tracking your impact against ${metrics}`;
+
+  let plan90 = 'LEAD & DELIVER\n';
+  plan90 += `- Own a key initiative end-to-end for ${teamName}\n`;
+  plan90 += `- Demonstrate measurable progress on ${metrics}\n`;
+  plan90 += `- Have earned trust with: ${nameList}\n`;
+  plan90 += `- Present a forward-looking roadmap perspective to ${managers.length ? managers.map(m => m.name).join(', ') : 'leadership'}\n`;
+  plan90 += '- Proactively identify and address misalignments between team and org priorities\n';
+  plan90 += `- Establish yourself as the go-to person for ${teamName} priorities\n`;
+  plan90 += "- Self-assess: What have you learned? What would you do differently? What's next?";
+
+  return { plan30, plan60, plan90 };
+}
+
+function maybeGeneratePlan() {
+  if (!planGenerated || !planManuallyEdited) {
+    const plan = generatePlan();
+    document.getElementById('plan30').value = plan.plan30;
+    document.getElementById('plan60').value = plan.plan60;
+    document.getElementById('plan90').value = plan.plan90;
+    planGenerated = true;
+    planManuallyEdited = false;
+  }
+}
+
+function regeneratePlan() {
+  if (planManuallyEdited && !confirm('This will overwrite your edits. Continue?')) return;
+  planManuallyEdited = false;
+  planGenerated = false;
+  maybeGeneratePlan();
+  showToast('Plan regenerated');
+}
+
+// --- Stakeholder questions ---
+
+function generateQuestionsForStakeholder(s) {
+  const questions = [];
+
+  questions.push(`What does success look like for ${s.team || 'your team'} this quarter?`);
+  questions.push("What's the biggest challenge you're facing right now?");
+
+  switch (s.relationship) {
+    case 'Direct Manager':
+      questions.push('What are your expectations for me in the first 90 days?');
+      questions.push('How do you prefer to communicate — what cadence and format?');
+      questions.push("What would make you confident I'm ramping well?");
+      questions.push("What should I know about the team's history and dynamics?");
+      break;
+    case 'Skip-Level':
+      questions.push('What are the top priorities for the org this year?');
+      questions.push("How does our team's work fit into the broader strategy?");
+      questions.push('What would you want to see from our team in the next quarter?');
+      break;
+    case 'Cross-Functional Partner':
+      questions.push('How have you worked with PMs on this team in the past?');
+      questions.push("What's worked well? What hasn't?");
+      questions.push('How can I make your work easier?');
+      questions.push('Where do you see the biggest opportunities for us to collaborate?');
+      break;
+    case 'Engineering Lead':
+      questions.push('What\'s the current state of the codebase and tech debt?');
+      questions.push('How does the team estimate and plan work?');
+      questions.push('What\'s your ideal working relationship with a PM?');
+      questions.push('Where are the technical risks I should understand?');
+      break;
+    case 'Design Lead':
+      questions.push('What\'s the current state of the design system and UX patterns?');
+      questions.push('How does design research happen here?');
+      questions.push('What\'s your ideal working relationship with a PM?');
+      questions.push('Where do you see the biggest UX opportunities?');
+      break;
+    case 'Exec Sponsor':
+      questions.push('What\'s your vision for this product area?');
+      questions.push('What metrics are you watching most closely?');
+      questions.push('What would a great outcome look like in 6 months?');
+      break;
+    case 'Customer-Facing':
+      questions.push('What are the top 3 things customers ask for or complain about?');
+      questions.push('What patterns do you see in churn or expansion?');
+      questions.push('Can I shadow some customer calls with you?');
+      questions.push('What do customers love that we should protect?');
+      break;
+    default:
+      questions.push('How does your work intersect with what our team does?');
+      questions.push("What should I understand about your team's priorities?");
+      break;
+  }
+
+  if (s.caresAbout) {
+    questions.push(`You mentioned "${s.caresAbout}" is a priority — how can my work support that?`);
+  }
+
+  return questions;
+}
+
+// --- Summary ---
+
+function renderStaticSection(title, fields) {
+  let html = `<div class="summary-section"><h3>${title}</h3>`;
+  fields.forEach(f => {
+    if (f.type === 'dynamic') return;
+    const val = getVal(f.id);
+    const display = val || 'Not provided';
+    const cls = val ? '' : ' empty';
+    html += `<div class="summary-row"><div class="q">${f.label}</div><div class="a${cls}">${escapeHtml(display)}</div></div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function renderSummary() {
+  const container = document.getElementById('summaryContent');
+  let html = '';
+
+  html += renderStaticSection(SECTION_TITLES[0], FIELDS[0]);
+
+  html += '<div class="summary-section"><h3>Stakeholder Ecosystem</h3>';
+  if (stakeholders.length === 0) {
+    html += '<div class="summary-row"><div class="a empty">No stakeholders added</div></div>';
+  } else {
+    stakeholders.forEach(s => {
+      html += '<div class="summary-stakeholder">';
+      html += `<div class="summary-row"><div class="q">${escapeHtml(s.name || 'Unnamed')} — ${escapeHtml(s.title || '')}${s.team ? ' — ' + escapeHtml(s.team) : ''}</div></div>`;
+      html += `<div class="summary-row"><div class="q">Cares About</div><div class="a">${escapeHtml(s.caresAbout || 'Not provided')}</div></div>`;
+      html += `<div class="summary-row"><div class="q">Relationship</div><div class="a">${escapeHtml(s.relationship || 'Not specified')}</div></div>`;
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+
+  html += renderStaticSection(SECTION_TITLES[2], FIELDS[2]);
+  html += renderStaticSection(SECTION_TITLES[3], FIELDS[3]);
+  html += renderStaticSection(SECTION_TITLES[4], FIELDS[4]);
+
+  html += '<div class="summary-section"><h3>30/60/90 Day Plan</h3>';
+  html += `<div class="summary-row"><div class="q">First 30 Days</div><div class="a">${escapeHtml(getVal('plan30') || 'Not generated')}</div></div>`;
+  html += `<div class="summary-row"><div class="q">Days 31-60</div><div class="a">${escapeHtml(getVal('plan60') || 'Not generated')}</div></div>`;
+  html += `<div class="summary-row"><div class="q">Days 61-90</div><div class="a">${escapeHtml(getVal('plan90') || 'Not generated')}</div></div>`;
+  html += '</div>';
+
+  html += '<div class="summary-section"><h3>Stakeholder Meeting Checklist</h3>';
+  stakeholders.forEach(s => {
+    const questions = generateQuestionsForStakeholder(s);
+    html += '<div class="summary-stakeholder">';
+    html += `<div class="summary-row"><div class="q">${escapeHtml(s.name)} (${escapeHtml(s.relationship || 'Other')})</div></div>`;
+    html += '<ul class="checklist-questions">';
+    questions.forEach(q => { html += `<li>${escapeHtml(q)}</li>`; });
+    html += '</ul></div>';
+  });
+  html += '</div>';
+
+  container.innerHTML = html;
+}
+
+// --- Export ---
+
+function buildMarkdown() {
+  let md = '# PM Onboarding Plan\n';
+  md += `*Generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}*\n\n`;
+
+  md += '## Role Context\n\n';
+  FIELDS[0].forEach(f => {
+    md += `**${f.label}**\n${getVal(f.id) || '*Not provided*'}\n\n`;
+  });
+
+  md += '## Stakeholder Ecosystem\n\n';
+  if (stakeholders.length === 0) {
+    md += '*No stakeholders added*\n\n';
+  } else {
+    stakeholders.forEach(s => {
+      md += `### ${s.name || 'Unnamed'}`;
+      if (s.title) md += ` — ${s.title}`;
+      if (s.team) md += ` — ${s.team}`;
+      md += '\n';
+      if (s.relationship) md += `- **Relationship:** ${s.relationship}\n`;
+      if (s.caresAbout) md += `- **Cares About:** ${s.caresAbout}\n`;
+      md += '\n';
+    });
+  }
+
+  md += '## Goal Alignment\n\n';
+  FIELDS[2].forEach(f => { md += `**${f.label}**\n${getVal(f.id) || '*Not provided*'}\n\n`; });
+
+  md += '## Leadership & Business Context\n\n';
+  FIELDS[3].forEach(f => { md += `**${f.label}**\n${getVal(f.id) || '*Not provided*'}\n\n`; });
+
+  md += '## Team & Org Motivations\n\n';
+  FIELDS[4].forEach(f => { md += `**${f.label}**\n${getVal(f.id) || '*Not provided*'}\n\n`; });
+
+  md += '## 30/60/90 Day Plan\n\n';
+  md += `### First 30 Days: Learn & Listen\n${getVal('plan30') || '*Not generated*'}\n\n`;
+  md += `### Days 31-60: Contribute & Connect\n${getVal('plan60') || '*Not generated*'}\n\n`;
+  md += `### Days 61-90: Lead & Deliver\n${getVal('plan90') || '*Not generated*'}\n\n`;
+
+  md += '## Stakeholder Meeting Checklist\n\n';
+  stakeholders.forEach(s => {
+    const questions = generateQuestionsForStakeholder(s);
+    md += `### ${s.name} (${s.relationship || 'Other'})\n`;
+    questions.forEach(q => { md += `- [ ] ${q}\n`; });
+    md += '\n';
+  });
+
+  return md;
+}
+
+function copyToClipboard() {
+  navigator.clipboard.writeText(buildMarkdown()).then(() => {
+    showToast('Copied to clipboard');
+  }).catch(() => {
+    showToast('Copy failed — try the download option');
+  });
+}
+
+function downloadMarkdown() {
+  const name = getVal('pmName') || getVal('teamName') || 'pm-onboarding';
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '');
+  const blob = new Blob([buildMarkdown()], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${slug}-onboarding-plan.md`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Downloaded');
+}
+
+function startOver() {
+  if (!confirm('Clear all your answers and start over? This cannot be undone.')) return;
+  document.querySelectorAll('input[type="text"], textarea, select').forEach(el => el.value = '');
+  stakeholders = [];
+  stakeholderIdCounter = 0;
+  editingStakeholderId = null;
+  planGenerated = false;
+  planManuallyEdited = false;
+  current = 0;
+  renderStakeholderList();
+  localStorage.removeItem(STORAGE_KEY);
+  showStage();
+  showToast('All data cleared');
+}
+
+// --- Persistence: localStorage ---
+
+function collectState() {
+  const fields = {};
+  document.querySelectorAll('input[type="text"], textarea, select').forEach(el => {
+    if (el.id && !el.id.startsWith('sh') && el.id !== 'fileInput') {
+      fields[el.id] = el.value;
+    }
+  });
+  return {
+    fields,
+    stakeholders,
+    stakeholderIdCounter,
+    current,
+    planGenerated,
+    planManuallyEdited
+  };
+}
+
+function restoreState(state) {
+  if (state.fields) {
+    Object.entries(state.fields).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (el) el.value = val;
+    });
+  }
+  if (state.stakeholders) {
+    stakeholders = state.stakeholders;
+    stakeholderIdCounter = state.stakeholderIdCounter || stakeholders.length;
+    renderStakeholderList();
+  }
+  if (typeof state.current === 'number') current = state.current;
+  if (typeof state.planGenerated === 'boolean') planGenerated = state.planGenerated;
+  if (typeof state.planManuallyEdited === 'boolean') planManuallyEdited = state.planManuallyEdited;
+}
+
+function autoSave() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(collectState()));
+  } catch (e) {}
+}
+
+function autoLoad() {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (data) {
+      restoreState(JSON.parse(data));
+      return true;
+    }
+  } catch (e) {}
+  return false;
+}
+
+// --- Persistence: JSON export/import ---
+
+function saveProgressJSON() {
+  const state = collectState();
+  const name = getVal('pmName') || getVal('teamName') || 'pm-onboarding';
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '');
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${slug}-progress.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Progress saved');
+}
+
+function loadProgressJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const state = JSON.parse(e.target.result);
+      restoreState(state);
+      showStage();
+      autoSave();
+      showToast('Progress restored');
+    } catch (err) {
+      showToast('Invalid file — could not load progress');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// --- Init ---
+
+function init() {
+  buildProgress();
+
+  const loaded = autoLoad();
+  if (loaded) {
+    showStage();
+  } else {
+    renderStakeholderList();
+    showStage();
+  }
+
+  document.addEventListener('input', function(e) {
+    if (e.target.id === 'plan30' || e.target.id === 'plan60' || e.target.id === 'plan90') {
+      planManuallyEdited = true;
+    }
+    if (e.target.id && !e.target.id.startsWith('sh') && e.target.id !== 'fileInput') {
+      autoSave();
+    }
+  });
+
+  document.addEventListener('change', function(e) {
+    if (e.target.id && !e.target.id.startsWith('sh') && e.target.id !== 'fileInput') {
+      autoSave();
+    }
+  });
+}
+
+init();
+</script>
+</body>
+</html>

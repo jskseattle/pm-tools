@@ -18,6 +18,21 @@ Outputs a formatted markdown summary you can copy or download.
 
 **How to use:** Open `tools/market-insights/index.html` in any browser. No setup, no accounts, no API keys.
 
+### [PM Onboarding Planner](tools/pm-onboarding/index.html)
+
+A structured onboarding tool that helps PMs ramp quickly in a new role:
+
+1. **Role Context** -- ground yourself in your new team and mission
+2. **Stakeholder Ecosystem** -- map the people who matter most (add/edit/remove dynamically)
+3. **Goal Alignment** -- connect your work to team, leadership, and business goals
+4. **Leadership & Business Context** -- understand the power structure and key metrics
+5. **Team & Org Motivations** -- learn what drives people and how the org operates
+6. **30/60/90 Day Plan** -- auto-generated from your inputs, fully editable
+
+Generates a stakeholder meeting checklist with role-specific questions for every person you've mapped. Your progress auto-saves to the browser and can be exported/imported as JSON so you can revisit over the full 90 days.
+
+**How to use:** Open `tools/pm-onboarding/index.html` in any browser. No setup, no accounts, no API keys.
+
 ## Philosophy
 
 - Zero dependencies, runs in a browser
